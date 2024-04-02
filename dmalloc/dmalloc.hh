@@ -5,7 +5,7 @@
 #include <cinttypes>
 #include <cstdio>
 #include <new>
-
+extern struct dmalloc_stats dmalloc_stature;
 /**
  * dmalloc(sz,file,line)
  *      malloc() wrapper. Dynamically allocate the requested amount `sz` of memory and

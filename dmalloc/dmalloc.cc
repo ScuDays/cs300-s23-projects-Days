@@ -2,6 +2,7 @@
 #include "dmalloc.hh"
 #include <cassert>
 #include <cstring>
+struct dmalloc_stats dmalloc_stature;
 
 /**
  * dmalloc(sz,file,line)
@@ -17,7 +18,47 @@
 void* dmalloc(size_t sz, const char* file, long line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     // Your code here.
-    return base_malloc(sz);
+    size_t length = sizeof(long long) + sz;
+    
+    if(sz > sizeof(long long) && length < sizeof(long long)){
+        dmalloc_stature.fail_size += sz;
+        dmalloc_stature.nfail ++ ;
+        return NULL;
+    }
+    long long* ptr = (long long *)base_malloc(length);
+    if(ptr == nullptr){
+        dmalloc_stature.fail_size += sz;
+        dmalloc_stature.nfail ++ ;
+        return NULL;
+    }
+    else{
+    //活跃分配次数
+    dmalloc_stature.nactive ++;
+     //活跃分配字节总数
+    dmalloc_stature.active_size += sz;
+    //总分配字节次数
+    dmalloc_stature.ntotal ++;
+    //总分配字节总数
+    dmalloc_stature.total_size += sz;
+   
+    uintptr_t current_min = (uintptr_t)ptr;
+     //第一次使用的时候，heap_min = 0,必须要主动赋值，不然0永远都比别的地址小。
+    if(dmalloc_stature.heap_min == 0){
+         dmalloc_stature.heap_min = current_min;
+    }
+    if(current_min < dmalloc_stature.heap_min){
+        dmalloc_stature.heap_min = current_min;
+    }
+    uintptr_t current_max = (uintptr_t)((uintptr_t)ptr + sizeof(long long) + sz);
+    if(current_max > dmalloc_stature.heap_max){
+    dmalloc_stature.heap_max = current_max;
+    }
+    *ptr = sz;
+    ptr ++;
+    void* ptr1 = ptr;
+    return ptr1;
+    }
+  
 }
 
 /**
@@ -32,7 +73,18 @@ void* dmalloc(size_t sz, const char* file, long line) {
 void dfree(void* ptr, const char* file, long line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     // Your code here.
+   if(ptr == nullptr){
+    return;
+   }
+   else{
+    long long * ptr1 = (long long *)ptr;
+    ptr1 --;
+    dmalloc_stature.active_size -= (*ptr1);
+
+     //活跃分配次数减少
+    dmalloc_stature.nactive --;
     base_free(ptr);
+   }
 }
 
 /**
@@ -47,9 +99,19 @@ void dfree(void* ptr, const char* file, long line) {
  * @arg long line : the line number from which dcalloc was called 
  * 
  * @return a pointer to the heap where the memory was reserved
- */
+ */ 
 void* dcalloc(size_t nmemb, size_t sz, const char* file, long line) {
     // Your code here (to fix test014).
+    size_t length = nmemb * sz;
+    if(length/nmemb != sz){
+        dmalloc_stature.nfail ++;
+        dmalloc_stature.fail_size += nmemb*sz;
+
+        return nullptr;
+        }
+
+
+  
     void* ptr = dmalloc(nmemb * sz, file, line);
     if (ptr) {
         memset(ptr, 0, nmemb * sz);
@@ -67,6 +129,7 @@ void get_statistics(dmalloc_stats* stats) {
     // Stub: set all statistics to enormous numbers
     memset(stats, 255, sizeof(dmalloc_stats));
     // Your code here.
+    memcpy(stats, &dmalloc_stature, sizeof(dmalloc_stats));
 }
 
 /**
