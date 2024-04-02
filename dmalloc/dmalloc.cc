@@ -18,14 +18,14 @@ struct dmalloc_stats dmalloc_stature;
 void* dmalloc(size_t sz, const char* file, long line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     // Your code here.
-    size_t length = sizeof(long long) + sz;
+    size_t length = sizeof(struct metaData) + sz;
     
-    if(sz > sizeof(long long) && length < sizeof(long long)){
+    if(sz > sizeof(struct metaData) && length < sizeof(struct metaData)){
         dmalloc_stature.fail_size += sz;
         dmalloc_stature.nfail ++ ;
         return NULL;
     }
-    long long* ptr = (long long *)base_malloc(length);
+    struct metaData* ptr = (struct metaData*)base_malloc(length);
     if(ptr == nullptr){
         dmalloc_stature.fail_size += sz;
         dmalloc_stature.nfail ++ ;
@@ -41,6 +41,9 @@ void* dmalloc(size_t sz, const char* file, long line) {
     //总分配字节总数
     dmalloc_stature.total_size += sz;
    
+    ptr->length = sz;
+    ptr->ifFree = 2; 
+    ptr ++;
     uintptr_t current_min = (uintptr_t)ptr;
      //第一次使用的时候，heap_min = 0,必须要主动赋值，不然0永远都比别的地址小。
     if(dmalloc_stature.heap_min == 0){
@@ -53,8 +56,7 @@ void* dmalloc(size_t sz, const char* file, long line) {
     if(current_max > dmalloc_stature.heap_max){
     dmalloc_stature.heap_max = current_max;
     }
-    *ptr = sz;
-    ptr ++;
+   
     void* ptr1 = ptr;
     return ptr1;
     }
@@ -77,9 +79,27 @@ void dfree(void* ptr, const char* file, long line) {
     return;
    }
    else{
-    long long * ptr1 = (long long *)ptr;
+    struct metaData * ptr1 = (struct metaData*)ptr;
     ptr1 --;
-    dmalloc_stature.active_size -= (*ptr1);
+    //判断指针是否在堆内
+    if((uintptr_t)ptr < dmalloc_stature.heap_min || (uintptr_t)ptr > dmalloc_stature.heap_max){
+    fprintf(stderr, "MEMORY BUG: %s:%d: invalid free of pointer %p, not in heap\n", file, line, (uintptr_t)ptr);
+    abort();
+    }
+    //判断是否是堆内野指针
+    if(ptr1->ifFree != 2 && ptr1->ifFree != 3){
+        fprintf(stderr, "MEMORY BUG: %s:%d: invalid free of pointer %p, not allocated\n", file, line, (uintptr_t)ptr);
+    abort();
+    }
+    //判断是否double free
+    if(ptr1->ifFree == 3){
+    fprintf(stderr, "MEMORY BUG: %s:%d: invalid free of pointer %p, double free\n", file, line, (uintptr_t)ptr);
+    abort();
+    }
+
+
+    dmalloc_stature.active_size -= ptr1->length;
+    ptr1->ifFree = 3;
 
      //活跃分配次数减少
     dmalloc_stature.nactive --;
@@ -102,11 +122,11 @@ void dfree(void* ptr, const char* file, long line) {
  */ 
 void* dcalloc(size_t nmemb, size_t sz, const char* file, long line) {
     // Your code here (to fix test014).
+    //检查是否越界
     size_t length = nmemb * sz;
     if(length/nmemb != sz){
         dmalloc_stature.nfail ++;
         dmalloc_stature.fail_size += nmemb*sz;
-
         return nullptr;
         }
 

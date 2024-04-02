@@ -56,6 +56,10 @@ struct dmalloc_stats {
     uintptr_t heap_min;                 // smallest allocated addr
     uintptr_t heap_max;                 // largest allocated addr
 };
+struct metaData{
+    size_t length;
+    size_t ifFree = 2; //2表示没未释放过，3表示已经释放
+};
 
 /**
  * get_statistics(stats)
