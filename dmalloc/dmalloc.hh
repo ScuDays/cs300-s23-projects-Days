@@ -5,7 +5,11 @@
 #include <cinttypes>
 #include <cstdio>
 #include <new>
+#include <map>
+#include <iostream>
 extern struct dmalloc_stats dmalloc_stature;
+extern std::map<struct metaData*, size_t> pointerMap;
+
 /**
  * dmalloc(sz,file,line)
  *      malloc() wrapper. Dynamically allocate the requested amount `sz` of memory and
@@ -57,8 +61,10 @@ struct dmalloc_stats {
     uintptr_t heap_max;                 // largest allocated addr
 };
 struct metaData{
-    size_t length;
     size_t ifFree = 2; //2表示没未释放过，3表示已经释放
+    size_t length;
+    const char* fileName;
+    long line;
 };
 
 /**
