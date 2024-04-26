@@ -67,14 +67,35 @@ void kernel(const char* command) {
 
     // (re-)Initialize the kernel page table.
     for (vmiter it(kernel_pagetable); it.va() < MEMSIZE_PHYSICAL; it += PAGESIZE) {
-        if (it.va() != 0) {
+
+    /** the source code*/
+    //     if (it.va() != 0) {
+    //         it.map(it.va(), PTE_P | PTE_W | PTE_U);
+    //     } else {
+    //         // nullptr is inaccessible even to the kernel
+    //         it.map(it.va(), 0);
+    //     }
+    // }
+
+    /** Modified code*/
+      if (it.va() != 0) {
+        //对于内核的页面，用户不应该具有访问权限
+             if(it.va() < 0x100000){
+                if(it.va() == CONSOLE_ADDR){
+                    it.map(it.va(), PTE_P | PTE_W | PTE_U);
+                }
+              else{
+                it.map(it.va(), PTE_P | PTE_W);
+              }
+             }
+             else{
             it.map(it.va(), PTE_P | PTE_W | PTE_U);
+            }
         } else {
             // nullptr is inaccessible even to the kernel
             it.map(it.va(), 0);
         }
     }
-
     // Set up process descriptors.
     for (pid_t i = 0; i < NPROC; i++) {
         ptable[i].pid = i;
@@ -351,6 +372,19 @@ int syscall_page_alloc(uintptr_t addr) {
     assert(!pages[addr / PAGESIZE].used());
     // Currently we're simply using the physical page that has the same address
     // as `addr` (which is a virtual address).
+
+    /** changed code*/
+    //判断是否在可以分配的内存范围内
+    vmiter CurrentVmt(kernel_pagetable, addr);
+    if(addr < PROC_START_ADDR | addr >= MEMSIZE_VIRTUAL){
+        return -1;
+    }
+    //判断是否具有访问权限
+    if(CurrentVmt.user() == 0 ){
+        return -1;
+    }
+    /** behind*/
+
     pages[addr / PAGESIZE].refcount = 1;
     memset((void*) addr, 0, PAGESIZE);
     return 0;

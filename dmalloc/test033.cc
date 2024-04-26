@@ -15,6 +15,7 @@ int main() {
     memcpy(b - 200, p, 450);
     free(b);
     print_statistics();
+    
 }
 
 //! MEMORY BUG???: ??? free of pointer ???
