@@ -22,6 +22,8 @@ void process_main() {
     // stack page (this process never needs more than one stack page).
     stack_bottom = (uint8_t*) round_down((uintptr_t) rdrsp() - 1, PAGESIZE);
 
+
+  
     // Allocate heap pages until (1) hit the stack (out of address space)
     // or (2) allocation fails (out of physical memory).
     while (true) {

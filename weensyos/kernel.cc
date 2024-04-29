@@ -68,15 +68,6 @@ void kernel(const char* command) {
     // (re-)Initialize the kernel page table.
     for (vmiter it(kernel_pagetable); it.va() < MEMSIZE_PHYSICAL; it += PAGESIZE) {
 
-    /** the source code*/
-    //     if (it.va() != 0) {
-    //         it.map(it.va(), PTE_P | PTE_W | PTE_U);
-    //     } else {
-    //         // nullptr is inaccessible even to the kernel
-    //         it.map(it.va(), 0);
-    //     }
-    // }
-
     /** Modified code*/
       if (it.va() != 0) {
         //对于内核的页面，用户不应该具有访问权限
@@ -173,10 +164,45 @@ void kfree(void* kptr) {
 void process_setup(pid_t pid, const char* program_name) {
     init_process(&ptable[pid], 0);
 
+    
+    /**my code here*/
+    x86_64_pagetable *proc_pagetable = (x86_64_pagetable *)kalloc(PAGESIZE);
+    assert(proc_pagetable);
+    memset(proc_pagetable, 0, PAGESIZE);
+
+for(vmiter kernel_It(kernel_pagetable, 0), process_It(proc_pagetable, 0)  ;kernel_It.va() < MEMSIZE_PHYSICAL; kernel_It += PAGESIZE ,process_It += PAGESIZE){
+        int PTEP = 0;
+        int PTEW = 0;
+        int PTEU = 0;
+        if(kernel_It.present())PTEP = 1;
+        if(kernel_It.writable())PTEW = 1;
+        if(kernel_It.user())PTEU = 1;
+        if(kernel_It.va() >= PROC_START_ADDR)PTEU = 0;
+        if(kernel_It.va() >= PROC_START_ADDR + PROC_SIZE * (pid - 1) && kernel_It.va() < PROC_START_ADDR + PROC_SIZE * (pid)){
+       // if(kernel_It.va() >= PROC_START_ADDR + PROC_SIZE * (pid-1 ) && kernel_It.va() < PROC_START_ADDR + PROC_SIZE * (pid+1)){
+            PTEU = 1;
+        }
+        if(PTEP == 1 && PTEW ==0 && PTEU==0){
+            process_It.map(process_It.va(), PTE_P);
+            // log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, 0, 0);
+    }
+      if(PTEP == 1 && PTEW ==1 && PTEU==0){
+            process_It.map(process_It.va(), PTE_P|PTE_W);
+            // log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, PTE_W, 0);
+    }
+      if(PTEP == 1 && PTEW ==1 && PTEU==1){
+            process_It.map(process_It.va(), PTE_P| PTE_W| PTE_U);
+             //log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, PTE_W, PTE_U);
+    }
+    }
+    /**my code here*/
+
     // Initialize this process's page table. Notice how we are currently
     // sharing the kernel's page table.
-    ptable[pid].pagetable = kernel_pagetable;
+    ptable[pid].pagetable = proc_pagetable;
 
+
+    
     // Initialize `program_loader`.
     // The `program_loader` is an iterator that visits segments of executables.
     program_loader loader(program_name);
@@ -482,3 +508,29 @@ void memshow() {
     extern void console_memviewer(proc* vmp);
     console_memviewer(p);
 }
+
+
+//  /** my code */
+//     x86_64_pagetable *proc_pagetable = (x86_64_pagetable *)kalloc(PAGESIZE);
+//     assert(proc_pagetable);
+//     memset(proc_pagetable, 0, PAGESIZE);
+//     ptable[pid].pagetable = proc_pagetable;
+//     /**my code */
+//     //ptable[pid].pagetable = kernel_pagetable;
+    
+//     /** my code */
+//     for(vmiter kernel_It(kernel_pagetable, 0), porcess_It(proc_pagetable, 0)  ;kernel_It.va() < MEMSIZE_PHYSICAL; kernel_It += PAGESIZE ,porcess_It += PAGESIZE){
+
+//         int PTEP = 0;
+//         int PTEW = 0;
+//         int PTEU = 0;
+//         if(kernel_It.present())PTEP = 1;
+//         if(kernel_It.writable())PTEW = 1;
+//         if(kernel_It.user())PTEU = 1;
+//         if(kernel_It.va() >= PROC_START_ADDR)PTEU = 0;
+//         if(kernel_It.va() >= PROC_START_ADDR + PROC_SIZE * (pid - 1) && kernel_It.va() < PROC_START_ADDR + PROC_SIZE * (pid)){
+//             PTEU = 1;
+//         }
+//         porcess_It.map(kernel_It.pa(), PTEP|PTEW|PTEU);
+//         log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, porcess_It.va(), kernel_It.pa(), PTEP, PTEW, PTEU);
+//     }
