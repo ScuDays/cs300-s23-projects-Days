@@ -29,7 +29,7 @@ proc* current;                  // pointer to currently executing proc
 
 #define HZ 100                  // timer interrupt frequency (interrupts/sec)
 static std::atomic<unsigned long> ticks; // # timer interrupts so far
-
+uintptr_t currentAddress;
 
 // Memory state
 //    Information about physical page with address `pa` is stored in
@@ -74,13 +74,17 @@ void kernel(const char* command) {
              if(it.va() < 0x100000){
                 if(it.va() == CONSOLE_ADDR){
                     it.map(it.va(), PTE_P | PTE_W | PTE_U);
+                    log_printf("Kernel :VA %p maps to PA %p with PERMS %p, %p, %p\n", it.va(), it.pa(), PTE_P, PTE_W, PTE_U);
+
                 }
               else{
                 it.map(it.va(), PTE_P | PTE_W);
+                 log_printf("Kernel :VA %p maps to PA %p with PERMS %p, %p\n", it.va(), it.pa(), PTE_P, PTE_W);
               }
              }
              else{
             it.map(it.va(), PTE_P | PTE_W | PTE_U);
+             log_printf("Kernel :VA %p maps to PA %p with PERMS %p, %p, %p\n", it.va(), it.pa(), PTE_P, PTE_W, PTE_U);
             }
         } else {
             // nullptr is inaccessible even to the kernel
@@ -170,6 +174,12 @@ void process_setup(pid_t pid, const char* program_name) {
     assert(proc_pagetable);
     memset(proc_pagetable, 0, PAGESIZE);
 
+
+    /**my code here*/
+
+    // Initialize this process's page table. Notice how we are currently
+    // sharing the kernel's page table.
+    ptable[pid].pagetable = proc_pagetable;
 for(vmiter kernel_It(kernel_pagetable, 0), process_It(proc_pagetable, 0)  ;kernel_It.va() < MEMSIZE_PHYSICAL; kernel_It += PAGESIZE ,process_It += PAGESIZE){
         int PTEP = 0;
         int PTEW = 0;
@@ -179,28 +189,21 @@ for(vmiter kernel_It(kernel_pagetable, 0), process_It(proc_pagetable, 0)  ;kerne
         if(kernel_It.user())PTEU = 1;
         if(kernel_It.va() >= PROC_START_ADDR)PTEU = 0;
         if(kernel_It.va() >= PROC_START_ADDR + PROC_SIZE * (pid - 1) && kernel_It.va() < PROC_START_ADDR + PROC_SIZE * (pid)){
-       // if(kernel_It.va() >= PROC_START_ADDR + PROC_SIZE * (pid-1 ) && kernel_It.va() < PROC_START_ADDR + PROC_SIZE * (pid+1)){
             PTEU = 1;
         }
         if(PTEP == 1 && PTEW ==0 && PTEU==0){
-            process_It.map(process_It.va(), PTE_P);
-            // log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, 0, 0);
+            process_It.try_map(process_It.va(), PTE_P);
+             log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, 0, 0);
     }
       if(PTEP == 1 && PTEW ==1 && PTEU==0){
-            process_It.map(process_It.va(), PTE_P|PTE_W);
-            // log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, PTE_W, 0);
+            process_It.try_map(process_It.va(), PTE_P|PTE_W);
+             log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, PTE_W, 0);
     }
       if(PTEP == 1 && PTEW ==1 && PTEU==1){
-            process_It.map(process_It.va(), PTE_P| PTE_W| PTE_U);
-             //log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, PTE_W, PTE_U);
+            process_It.try_map(process_It.va(), PTE_P| PTE_W| PTE_U);
+             log_printf("this is pid %d,VA %p maps to PA %p with PERMS %p, %p, %p\n", pid, process_It.va(), kernel_It.pa(), PTE_P, PTE_W, PTE_U);
     }
     }
-    /**my code here*/
-
-    // Initialize this process's page table. Notice how we are currently
-    // sharing the kernel's page table.
-    ptable[pid].pagetable = proc_pagetable;
-
 
     
     // Initialize `program_loader`.
@@ -221,6 +224,7 @@ for(vmiter kernel_It(kernel_pagetable, 0), process_It(proc_pagetable, 0)  ;kerne
             // Here, we're directly getting the page that has the same physical address as the
             // virtual address `a`, and claiming that page by incrementing its reference count
             // (you will have to change this later).
+            //log_printf("this is pid %d%p\n",a);
             pages[a / PAGESIZE].refcount = 1;
         }
     }
