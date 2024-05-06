@@ -255,8 +255,8 @@ for(vmiter kernel_It(kernel_pagetable, 0), process_It(proc_pagetable, 0)  ;kerne
 
 
     // We also need to allocate a page for the stack.
-    uintptr_t stack_addr = PROC_START_ADDR + PROC_SIZE * pid - PAGESIZE;
-    //uintptr_t stack_addr = MEMSIZE_VIRTUAL - PAGESIZE;
+    //uintptr_t stack_addr = PROC_START_ADDR + PROC_SIZE * pid - PAGESIZE;
+    uintptr_t stack_addr = MEMSIZE_VIRTUAL - PAGESIZE;
     
     //assert(!pages[stack_addr / PAGESIZE].used());
 
@@ -470,7 +470,7 @@ int syscall_page_alloc(uintptr_t addr) {
     memset((void*) alloc_pa, 0, PAGESIZE);
 
     it.try_map(alloc_pa, PTE_P | PTE_W | PTE_U);
-    log_printf("pid %d va addr:%p to pa addr: %p\n ",current->pid,addr, alloc_pa );
+    //log_printf("pid %d va addr:%p to pa addr: %p\n ",current->pid,addr, alloc_pa );
     return 0;
 }
 
