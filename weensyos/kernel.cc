@@ -178,7 +178,7 @@ void process_setup(pid_t pid, const char* program_name) {
 
     //Then calling memset (to ensure the page table is empty).
     memset(ptable[pid].pagetable, 0, PAGESIZE);
-
+    ptable[pid].pagetable = proc_pagetable;
 
     // vmiter iterator(ptable[pid].pagetable);
     // for(vmiter it(kernel_pagetable); it.va() < PROC_START_ADDR; it += PAGESIZE) {
@@ -192,7 +192,7 @@ void process_setup(pid_t pid, const char* program_name) {
     
     // }
 
-       ptable[pid].pagetable = proc_pagetable;
+       
 for(vmiter kernel_It(kernel_pagetable, 0), process_It(proc_pagetable, 0)  ;kernel_It.va() < PROC_START_ADDR; kernel_It += PAGESIZE ,process_It += PAGESIZE){
         int PTEP = 0;
         int PTEW = 0;
@@ -480,8 +480,55 @@ int syscall_page_alloc(uintptr_t addr) {
 //    implements the specification for `sys_fork` in `u-lib.hh`.
 pid_t syscall_fork() {
     // Implement for Step 5!
-    panic("Unexpected system call %ld!\n", SYSCALL_FORK);
+    int child_pid = -1;
+    for(int i = 1; i < NPROC; i++){
+        if(ptable[i].state == P_FREE){
+            child_pid = i;
+            break;
+        }
+    }
+    if(child_pid == -1){
+        return -1;
+    }
+
+    ptable[child_pid].pid = child_pid;
+    x86_64_pagetable* process_pagetable = (x86_64_pagetable*)kalloc(PAGESIZE);
+    memset(process_pagetable, 0, PAGESIZE);
+    ptable[child_pid].pagetable = process_pagetable;
+   
+    for(vmiter it(current->pagetable, 0), process_it(process_pagetable, 0); it.va() < MEMSIZE_VIRTUAL; it += PAGESIZE, process_it += PAGESIZE){
+        bool user_access =it.user();
+        uint64_t this_perm = it.perm();
+        if(it.present() && !it.writable()){
+            process_it.try_map(it.pa(), this_perm);
+            pages[(uintptr_t)it.pa() / PAGESIZE].refcount += 1;
+        }
+        else if(user_access == true){
+            if(it.va() == CONSOLE_ADDR){
+                process_it.try_map(CONSOLE_ADDR, this_perm);
+            }
+            else{
+                uintptr_t child_pa = (uintptr_t)(kalloc(PAGESIZE));
+                memcpy((void*) child_pa, (void*) it.pa(), PAGESIZE);
+                process_it.try_map(child_pa, this_perm);
+            }
+        }
+        else {
+            process_it.try_map(it.pa(), this_perm);
+        }
+        
+    }
+
+    ptable[child_pid].state = P_RUNNABLE;        // process state (see above)
+    ptable[child_pid].regs = current->regs;      // process's current registers
+    ptable[child_pid].regs.reg_rax = 0;
+    ptable[current->pid].regs.reg_rax = child_pid;
+    
+    return child_pid;
 }
+
+
+
 
 // syscall_exit()
 //    Handles the SYSCALL_EXIT system call. This function
