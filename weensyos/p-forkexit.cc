@@ -1,6 +1,6 @@
 #include "u-lib.hh"
 #ifndef ALLOC_SLOWDOWN
-#define ALLOC_SLOWDOWN 18
+#define ALLOC_SLOWDOWN 5
 #endif
 
 extern uint8_t end[];
