@@ -114,8 +114,8 @@ struct [[nodiscard]] errc {
 #if __has_include("zpp_throwing.h")
   constexpr zpp::throwing<void> operator co_await() const {
     if (failure(code)) [[unlikely]] {
-      return code;
-    }
+        return code;
+      }
     return zpp::void_v;
   }
 #endif
@@ -127,11 +127,11 @@ struct [[nodiscard]] errc {
   constexpr void or_throw() const {
     if (failure(code)) [[unlikely]] {
 #ifdef __cpp_exceptions
-      throw std::system_error(std::make_error_code(code));
+        throw std::system_error(std::make_error_code(code));
 #else
-      std::abort();
+        std::abort();
 #endif
-    }
+      }
   }
 
   std::errc code;
@@ -296,13 +296,13 @@ struct access {
     } else if constexpr (requires(Type && item) {
                            requires std::same_as<
                                std::remove_cvref_t<decltype(serialize(item))>,
-                               protocol<std::remove_cvref_t<decltype(serialize(
-                                            item))>::value,
-                                        std::remove_cvref_t<decltype(serialize(
-                                            item))>::members>>;
+                               protocol<std::remove_cvref_t<decltype(
+                                            serialize(item))>::value,
+                                        std::remove_cvref_t<decltype(
+                                            serialize(item))>::members>>;
                          }) {
-      return std::remove_cvref_t<decltype(serialize(
-          std::declval<Type>()))>::value;
+      return std::remove_cvref_t<decltype(
+          serialize(std::declval<Type>()))>::value;
     } else {
       static_assert(!sizeof(Type));
     }
@@ -347,17 +347,17 @@ struct variant_impl<Variant<Types...>> {
   constexpr static auto get_id() {
     if constexpr (Index == CurrentIndex) {
       if constexpr (requires {
-                      requires std::same_as <
+                      requires std::same_as<
                           serialization_id<FirstType::serialize_id::value>,
-                      typename FirstType::serialize_id > ;
+                          typename FirstType::serialize_id>;
                     }) {
         return FirstType::serialize_id::value;
       } else if constexpr (requires {
-                             requires std::same_as <
+                             requires std::same_as<
                                  serialization_id<decltype(serialize_id(
                                      std::declval<FirstType>()))::value>,
-                             decltype(serialize_id(std::declval<FirstType>())) >
-                                 ;
+                                 decltype(
+                                     serialize_id(std::declval<FirstType>()))>;
                            }) {
         return decltype(serialize_id(std::declval<FirstType>()))::value;
       } else {
@@ -535,8 +535,8 @@ constexpr auto get_default_size_type() {
 
 constexpr auto get_default_size_type(auto option, auto... options) {
   if constexpr (requires { typename decltype(option)::default_size_type; }) {
-    if constexpr (std::is_void_v<
-                      typename decltype(option)::default_size_type>) {
+    if constexpr (std::is_void_v<typename decltype(
+                      option)::default_size_type>) {
       return std::monostate{};
     } else {
       return typename decltype(option)::default_size_type{};
@@ -619,13 +619,14 @@ constexpr auto unique(auto&&... values) {
 
 namespace concepts {
 template <typename Type>
-concept byte_type = std::same_as < std::remove_cv_t<Type>,
-char > || std::same_as<std::remove_cv_t<Type>, unsigned char> ||
-    std::same_as<std::remove_cv_t<Type>, std::byte>;
+concept byte_type = std::same_as<std::remove_cv_t<Type>, char> ||
+                    std::same_as<std::remove_cv_t<Type>, unsigned char> ||
+                    std::same_as<std::remove_cv_t<Type>, std::byte>;
 
 template <typename Type>
-concept byte_view = byte_type<typename std::remove_cvref_t<Type>::value_type> &&
-    requires(Type value) {
+concept byte_view =
+    byte_type<typename std::remove_cvref_t<Type>::value_type>&& requires(
+        Type value) {
   value.data();
   value.size();
 };
@@ -663,7 +664,7 @@ concept container =
 };
 
 template <typename Type>
-concept associative_container = container<Type> && requires(Type container) {
+concept associative_container = container<Type>&& requires(Type container) {
   typename std::remove_cvref_t<Type>::key_type;
 };
 
@@ -726,7 +727,8 @@ concept endian_aware_archive = requires {
 
 template <typename Archive, typename Type>
 concept serialize_as_bytes = endian_independent_byte_serializable<Type> ||
-    (!endian_aware_archive<Archive> && byte_serializable<Type>);
+                             (!endian_aware_archive<Archive> &&
+                              byte_serializable<Type>);
 
 template <typename Type, typename Reference>
 concept type_references = requires {
@@ -760,9 +762,9 @@ concept self_referencing = access::self_referencing<Type>();
 
 template <typename Type>
 concept has_fixed_nonzero_size = requires {
-  requires std::integral_constant < std::size_t, std::remove_cvref_t<Type> {
-  }
-  .size() > ::value != 0;
+  requires std::integral_constant<std::size_t,
+                                  std::remove_cvref_t<Type>{}.size()>::value !=
+      0;
 };
 
 }  // namespace concepts
@@ -1212,8 +1214,9 @@ ZPP_BITS_INLINE constexpr static auto serialize(
     Archive& archive,
     const optional_ptr<Type>& self) requires(Archive::kind() == kind::out) {
   if (!self) [[unlikely]] {
-    return archive(std::byte(false));
-  } else {
+      return archive(std::byte(false));
+    }
+  else {
     return archive(std::byte(true), *self);
   }
 }
@@ -1224,18 +1227,19 @@ ZPP_BITS_INLINE constexpr static auto serialize(
     optional_ptr<Type>& self) requires(Archive::kind() == kind::in) {
   std::byte has_value{};
   if (auto result = archive(has_value); failure(result)) [[unlikely]] {
-    return result;
-  }
+      return result;
+    }
 
   if (!bool(has_value)) [[unlikely]] {
-    self = {};
-    return errc{};
-  }
+      self = {};
+      return errc{};
+    }
 
   if (auto result = archive(static_cast<std::unique_ptr<Type>&>(self));
-      failure(result)) [[unlikely]] {
-    return result;
-  }
+      failure(result))
+    [[unlikely]] {
+      return result;
+    }
 
   return errc{};
 }
@@ -1373,19 +1377,19 @@ ZPP_BITS_INLINE constexpr auto serialize(
   constexpr auto max_size = varint_max_size<Type>;
   if constexpr (Archive::resizable) {
     if (auto result = archive.enlarge_for(max_size); failure(result))
-        [[unlikely]] {
-      return result;
-    }
+      [[unlikely]] {
+        return result;
+      }
   }
 
   auto data = archive.remaining_data();
   if constexpr (!Archive::resizable) {
     auto data_size = data.size();
     if (data_size < max_size) [[unlikely]] {
-      if (data_size < varint_size(value)) [[unlikely]] {
-        return errc{std::errc::result_out_of_range};
+        if (data_size < varint_size(value)) [[unlikely]] {
+            return errc{std::errc::result_out_of_range};
+          }
       }
-    }
   }
 
   using byte_type = std::remove_cvref_t<decltype(data[0])>;
@@ -1403,19 +1407,20 @@ ZPP_BITS_INLINE constexpr auto serialize(
 constexpr auto decode_varint(auto data, auto& value, auto& position) {
   using value_type = std::remove_cvref_t<decltype(value)>;
   if (data.size() < varint_max_size<value_type>) [[unlikely]] {
-    std::size_t shift = 0;
-    for (auto& byte_value : data) {
-      auto next_byte = value_type(byte_value);
-      value |= (next_byte & 0x7f) << shift;
-      if (next_byte >= 0x80) [[unlikely]] {
-        shift += CHAR_BIT - 1;
-        continue;
+      std::size_t shift = 0;
+      for (auto& byte_value : data) {
+        auto next_byte = value_type(byte_value);
+        value |= (next_byte & 0x7f) << shift;
+        if (next_byte >= 0x80) [[unlikely]] {
+            shift += CHAR_BIT - 1;
+            continue;
+          }
+        position += 1 + std::distance(data.data(), &byte_value);
+        return errc{};
       }
-      position += 1 + std::distance(data.data(), &byte_value);
-      return errc{};
+      return errc{std::errc::result_out_of_range};
     }
-    return errc{std::errc::result_out_of_range};
-  } else {
+  else {
     auto p = data.data();
     do {
       // clang-format off
@@ -1455,19 +1460,21 @@ ZPP_BITS_INLINE constexpr auto serialize(
   if constexpr (!ZPP_BITS_INLINE_DECODE_VARINT) {
     auto& position = archive.position();
     if (!data.empty() && !(value_type(data[0]) & 0x80)) [[likely]] {
-      value = value_type(data[0]);
-      position += 1;
-    } else if (auto result =
-                   std::is_constant_evaluated()
-                       ? decode_varint(data, value, position)
-                       : decode_varint(
-                             std::span{reinterpret_cast<const std::byte*>(
-                                           data.data()),
-                                       data.size()},
-                             value, position);
-               failure(result)) [[unlikely]] {
-      return result;
-    }
+        value = value_type(data[0]);
+        position += 1;
+      }
+    else if (auto result =
+                 std::is_constant_evaluated()
+                     ? decode_varint(data, value, position)
+                     : decode_varint(
+                           std::span{
+                               reinterpret_cast<const std::byte*>(data.data()),
+                               data.size()},
+                           value, position);
+             failure(result))
+      [[unlikely]] {
+        return result;
+      }
 
     if constexpr (varint_encoding::zig_zag == Encoding) {
       self.value = decltype(self.value)((value >> 1) ^ -(value & 0x1));
@@ -1475,25 +1482,27 @@ ZPP_BITS_INLINE constexpr auto serialize(
       self.value = decltype(self.value)(value);
     }
     return errc{};
-  } else if (data.size() < varint_max_size<value_type>) [[unlikely]] {
-    std::size_t shift = 0;
-    for (auto& byte_value : data) {
-      auto next_byte = decltype(value)(byte_value);
-      value |= (next_byte & 0x7f) << shift;
-      if (next_byte >= 0x80) [[unlikely]] {
-        shift += CHAR_BIT - 1;
-        continue;
+  } else if (data.size() < varint_max_size<value_type>)
+    [[unlikely]] {
+      std::size_t shift = 0;
+      for (auto& byte_value : data) {
+        auto next_byte = decltype(value)(byte_value);
+        value |= (next_byte & 0x7f) << shift;
+        if (next_byte >= 0x80) [[unlikely]] {
+            shift += CHAR_BIT - 1;
+            continue;
+          }
+        if constexpr (varint_encoding::zig_zag == Encoding) {
+          self.value = decltype(self.value)((value >> 1) ^ -(value & 0x1));
+        } else {
+          self.value = decltype(self.value)(value);
+        }
+        archive.position() += 1 + std::distance(data.data(), &byte_value);
+        return errc{};
       }
-      if constexpr (varint_encoding::zig_zag == Encoding) {
-        self.value = decltype(self.value)((value >> 1) ^ -(value & 0x1));
-      } else {
-        self.value = decltype(self.value)(value);
-      }
-      archive.position() += 1 + std::distance(data.data(), &byte_value);
-      return errc{};
+      return errc{std::errc::result_out_of_range};
     }
-    return errc{std::errc::result_out_of_range};
-  } else {
+  else {
     auto p = data.data();
     do {
       // clang-format off
@@ -1643,37 +1652,37 @@ class basic_out {
   ZPP_BITS_INLINE constexpr errc enlarge_for(auto additional_size) {
     auto size = m_data.size();
     if (additional_size > size - m_position) [[unlikely]] {
-      constexpr auto multiplier = std::get<0>(enlarger);
-      constexpr auto divisor = std::get<1>(enlarger);
-      static_assert(multiplier != 0 && divisor != 0);
+        constexpr auto multiplier = std::get<0>(enlarger);
+        constexpr auto divisor = std::get<1>(enlarger);
+        static_assert(multiplier != 0 && divisor != 0);
 
-      auto required_size = size + additional_size;
-      if constexpr (!no_enlarge_overflow) {
-        if (required_size < size) [[unlikely]] {
-          return std::errc::no_buffer_space;
-        }
-      }
-
-      auto new_size = required_size;
-      if constexpr (multiplier != 1) {
-        new_size *= multiplier;
+        auto required_size = size + additional_size;
         if constexpr (!no_enlarge_overflow) {
-          if (new_size / multiplier != required_size) [[unlikely]] {
-            return std::errc::no_buffer_space;
+          if (required_size < size) [[unlikely]] {
+              return std::errc::no_buffer_space;
+            }
+        }
+
+        auto new_size = required_size;
+        if constexpr (multiplier != 1) {
+          new_size *= multiplier;
+          if constexpr (!no_enlarge_overflow) {
+            if (new_size / multiplier != required_size) [[unlikely]] {
+                return std::errc::no_buffer_space;
+              }
           }
         }
-      }
-      if constexpr (divisor != 1) {
-        new_size /= divisor;
-      }
-      if constexpr (allocation_limit !=
-                    std::numeric_limits<std::size_t>::max()) {
-        if (new_size > allocation_limit) [[unlikely]] {
-          return std::errc::no_buffer_space;
+        if constexpr (divisor != 1) {
+          new_size /= divisor;
         }
+        if constexpr (allocation_limit !=
+                      std::numeric_limits<std::size_t>::max()) {
+          if (new_size > allocation_limit) [[unlikely]] {
+              return std::errc::no_buffer_space;
+            }
+        }
+        m_data.resize(new_size);
       }
-      m_data.resize(new_size);
-    }
     return {};
   }
 
@@ -1681,8 +1690,8 @@ class basic_out {
   ZPP_BITS_INLINE constexpr errc serialize_many(auto&& first_item,
                                                 auto&&... items) {
     if (auto result = serialize_one(first_item); failure(result)) [[unlikely]] {
-      return result;
-    }
+        return result;
+      }
 
     return serialize_many(items...);
   }
@@ -1721,12 +1730,13 @@ class basic_out {
     } else if constexpr (std::is_fundamental_v<type> || std::is_enum_v<type>) {
       if constexpr (resizable) {
         if (auto result = enlarge_for(sizeof(item)); failure(result))
-            [[unlikely]] {
-          return result;
+          [[unlikely]] {
+            return result;
+          }
+      } else if (sizeof(item) > m_data.size() - m_position)
+        [[unlikely]] {
+          return std::errc::result_out_of_range;
         }
-      } else if (sizeof(item) > m_data.size() - m_position) [[unlikely]] {
-        return std::errc::result_out_of_range;
-      }
 
       if (std::is_constant_evaluated()) {
         auto value = std::bit_cast<
@@ -1761,12 +1771,13 @@ class basic_out {
       auto item_size_in_bytes = item.size_in_bytes();
       if constexpr (resizable) {
         if (auto result = enlarge_for(item_size_in_bytes); failure(result))
-            [[unlikely]] {
-          return result;
+          [[unlikely]] {
+            return result;
+          }
+      } else if (item_size_in_bytes > m_data.size() - m_position)
+        [[unlikely]] {
+          return std::errc::result_out_of_range;
         }
-      } else if (item_size_in_bytes > m_data.size() - m_position) [[unlikely]] {
-        return std::errc::result_out_of_range;
-      }
 
       if (std::is_constant_evaluated()) {
         auto count = item.count();
@@ -1820,8 +1831,8 @@ class basic_out {
     } else {
       for (auto& item : array) {
         if (auto result = serialize_one(item); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       }
       return {};
     }
@@ -1852,9 +1863,10 @@ class basic_out {
                            requires concepts::has_fixed_nonzero_size<type>;
                          }))) {
         if (auto result = serialize_one(static_cast<SizeType>(size));
-            failure(result)) [[unlikely]] {
-          return result;
-        }
+            failure(result))
+          [[unlikely]] {
+            return result;
+          }
       }
       return serialize_one(bytes(container, size));
     } else {
@@ -1871,14 +1883,15 @@ class basic_out {
                          }))) {
         if (auto result =
                 serialize_one(static_cast<SizeType>(container.size()));
-            failure(result)) [[unlikely]] {
-          return result;
-        }
+            failure(result))
+          [[unlikely]] {
+            return result;
+          }
       }
       for (auto& item : container) {
         if (auto result = serialize_one(item); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       }
       return {};
     }
@@ -1899,8 +1912,9 @@ class basic_out {
   ZPP_BITS_INLINE constexpr errc serialize_one(
       concepts::optional auto&& optional) {
     if (!optional) [[unlikely]] {
-      return serialize_one(std::byte(false));
-    } else {
+        return serialize_one(std::byte(false));
+      }
+    else {
       return serialize_many(std::byte(true), *optional);
     }
   }
@@ -1917,8 +1931,8 @@ class basic_out {
     } else {
       auto variant_index = variant.index();
       if (std::variant_npos == variant_index) [[unlikely]] {
-        return std::errc::invalid_argument;
-      }
+          return std::errc::invalid_argument;
+        }
 
       return std::visit(
           [index = variant_index, this](auto& object)
@@ -1933,8 +1947,8 @@ class basic_out {
   ZPP_BITS_INLINE constexpr errc serialize_one(
       concepts::owning_pointer auto&& pointer) {
     if (nullptr == pointer) [[unlikely]] {
-      return std::errc::invalid_argument;
-    }
+        return std::errc::invalid_argument;
+      }
 
     return serialize_one(*pointer);
   }
@@ -1945,12 +1959,13 @@ class basic_out {
 
     if constexpr (resizable) {
       if (auto result = enlarge_for(size_in_bytes); failure(result))
-          [[unlikely]] {
-        return result;
+        [[unlikely]] {
+          return result;
+        }
+    } else if (size_in_bytes > m_data.size() - m_position)
+      [[unlikely]] {
+        return std::errc::result_out_of_range;
       }
-    } else if (size_in_bytes > m_data.size() - m_position) [[unlikely]] {
-      return std::errc::result_out_of_range;
-    }
 
     auto data = m_data.data() + m_position;
     for (std::size_t i = 0; i < size; ++i) {
@@ -1970,20 +1985,20 @@ class basic_out {
     if constexpr (!std::is_void_v<SizeType>) {
       auto size_position = m_position;
       if (auto result = serialize_one(SizeType{}); failure(result))
-          [[unlikely]] {
-        return result;
-      }
+        [[unlikely]] {
+          return result;
+        }
 
       if constexpr (requires { typename type::serialize; }) {
         constexpr auto protocol = type::serialize::value;
         if (auto result = protocol(*this, item); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       } else {
         constexpr auto protocol = decltype(serialize(item))::value;
         if (auto result = protocol(*this, item); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       }
 
       auto current_position = m_position;
@@ -1998,13 +2013,13 @@ class basic_out {
         if (move_ahead_count) {
           if constexpr (resizable) {
             if (auto result = enlarge_for(move_ahead_count); failure(result))
-                [[unlikely]] {
-              return result;
-            }
-          } else if (move_ahead_count > m_data.size() - current_position)
               [[unlikely]] {
-            return std::errc::result_out_of_range;
-          }
+                return result;
+              }
+          } else if (move_ahead_count > m_data.size() - current_position)
+            [[unlikely]] {
+              return std::errc::result_out_of_range;
+            }
           auto data = m_data.data();
           auto message_start = data + size_position + preserialized_varint_size;
           auto message_end = data + current_position;
@@ -2183,8 +2198,8 @@ class in {
   ZPP_BITS_INLINE constexpr errc serialize_many(auto&& first_item,
                                                 auto&&... items) {
     if (auto result = serialize_one(first_item); failure(result)) [[unlikely]] {
-      return result;
-    }
+        return result;
+      }
 
     return serialize_many(items...);
   }
@@ -2205,8 +2220,8 @@ class in {
     } else if constexpr (std::is_fundamental_v<type> || std::is_enum_v<type>) {
       auto size = m_data.size();
       if (sizeof(item) > size - m_position) [[unlikely]] {
-        return std::errc::result_out_of_range;
-      }
+          return std::errc::result_out_of_range;
+        }
       if (std::is_constant_evaluated()) {
         std::array<std::remove_const_t<byte_type>, sizeof(item)> value;
         for (std::size_t i = 0; i < sizeof(value); ++i) {
@@ -2240,8 +2255,8 @@ class in {
       auto size = m_data.size();
       auto item_size_in_bytes = item.size_in_bytes();
       if (item_size_in_bytes > size - m_position) [[unlikely]] {
-        return std::errc::result_out_of_range;
-      }
+          return std::errc::result_out_of_range;
+        }
       if (std::is_constant_evaluated()) {
         std::size_t count = item.count();
         for (std::size_t index = 0; index < count; ++index) {
@@ -2287,8 +2302,8 @@ class in {
     } else {
       for (auto& item : array) {
         if (auto result = serialize_one(item); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       }
       return {};
     }
@@ -2314,16 +2329,16 @@ class in {
                        }))) {
       SizeType size{};
       if (auto result = serialize_one(size); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
 
       if constexpr (requires(type container) { container.resize(size); }) {
         if constexpr (allocation_limit !=
                       std::numeric_limits<std::size_t>::max()) {
           constexpr auto limit = allocation_limit / sizeof(value_type);
           if (size > limit) [[unlikely]] {
-            return std::errc::message_size;
-          }
+              return std::errc::message_size;
+            }
         }
         container.resize(size);
       } else if constexpr (is_const &&
@@ -2331,14 +2346,14 @@ class in {
                             std::same_as<char, value_type> ||
                             std::same_as<unsigned char, value_type>)) {
         if (size > m_data.size() - m_position) [[unlikely]] {
-          return std::errc::result_out_of_range;
-        }
+            return std::errc::result_out_of_range;
+          }
         container = {m_data.data() + m_position, size};
         m_position += size;
       } else {
         if (size > container.size()) [[unlikely]] {
-          return std::errc::result_out_of_range;
-        }
+            return std::errc::result_out_of_range;
+          }
         container = {container.data(), size};
       }
 
@@ -2377,8 +2392,8 @@ class in {
                         requires concepts::has_fixed_nonzero_size<type>;
                       }) {
           if (type::extent > m_data.size() - m_position) [[unlikely]] {
-            return std::errc::result_out_of_range;
-          }
+              return std::errc::result_out_of_range;
+            }
           container = {m_data.data() + m_position, type::extent};
           m_position += type::extent;
         } else if constexpr (std::is_void_v<SizeType>) {
@@ -2393,8 +2408,8 @@ class in {
     } else {
       for (auto& item : container) {
         if (auto result = serialize_one(item); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       }
       return {};
     }
@@ -2409,8 +2424,8 @@ class in {
 
     if constexpr (!std::is_void_v<SizeType>) {
       if (auto result = serialize_one(size); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
     } else {
       size = container.size();
     }
@@ -2427,9 +2442,9 @@ class in {
             access::placement_new<value_type>(std::addressof(storage));
         destructor_guard guard{*object};
         if (auto result = serialize_one(*object); failure(result))
-            [[unlikely]] {
-          return result;
-        }
+          [[unlikely]] {
+            return result;
+          }
 
         container.insert(std::move(*object));
       } else {
@@ -2441,9 +2456,9 @@ class in {
             access::placement_new<value_type>(std::addressof(storage));
         destructor_guard guard{*object};
         if (auto result = serialize_one(*object); failure(result))
-            [[unlikely]] {
-          return result;
-        }
+          [[unlikely]] {
+            return result;
+          }
 
         container.insert(std::move(*object));
       }
@@ -2470,13 +2485,13 @@ class in {
 
     std::byte has_value{};
     if (auto result = serialize_one(has_value); failure(result)) [[unlikely]] {
-      return result;
-    }
+        return result;
+      }
 
     if (!bool(has_value)) [[unlikely]] {
-      optional = std::nullopt;
-      return {};
-    }
+        optional = std::nullopt;
+        return {};
+      }
 
     if constexpr (std::is_default_constructible_v<value_type>) {
       if (!optional) {
@@ -2484,9 +2499,9 @@ class in {
       }
 
       if (auto result = serialize_one(*optional); failure(result))
-          [[unlikely]] {
-        return result;
-      }
+        [[unlikely]] {
+          return result;
+        }
     } else {
       std::aligned_storage_t<sizeof(value_type), alignof(value_type)> storage;
 
@@ -2494,8 +2509,8 @@ class in {
       destructor_guard guard{*object};
 
       if (auto result = serialize_one(*object); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
 
       optional = std::move(*object);
     }
@@ -2506,8 +2521,8 @@ class in {
   template <typename KnownId = void, typename... Types,
             template <typename...> typename Variant>
   ZPP_BITS_INLINE constexpr errc serialize_one(
-      Variant<Types...>& variant) requires
-      concepts::variant<Variant<Types...>> {
+      Variant<Types...>&
+          variant) requires concepts::variant<Variant<Types...>> {
     using type = std::remove_cvref_t<decltype(variant)>;
 
     if constexpr (!std::is_void_v<KnownId>) {
@@ -2532,16 +2547,16 @@ class in {
         destructor_guard guard{*object};
 
         if (auto result = serialize_one(*object); failure(result))
-            [[unlikely]] {
-          return result;
-        }
+          [[unlikely]] {
+            return result;
+          }
         variant = std::move(*object);
       }
     } else {
       typename traits::variant<type>::id_type id;
       if (auto result = serialize_one(id); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
 
       return serialize_one(variant, id);
     }
@@ -2555,8 +2570,8 @@ class in {
 
     auto index = traits::variant<type>::index(id);
     if (index > sizeof...(Types)) [[unlikely]] {
-      return std::errc::bad_message;
-    }
+        return std::errc::bad_message;
+      }
 
     constexpr std::tuple loaders{
         [](auto& self, auto& variant) ZPP_BITS_CONSTEXPR_INLINE_LAMBDA {
@@ -2573,9 +2588,9 @@ class in {
             destructor_guard guard{*object};
 
             if (auto result = self.serialize_one(*object); failure(result))
-                [[unlikely]] {
-              return result;
-            }
+              [[unlikely]] {
+                return result;
+              }
             variant = std::move(*object);
           }
         }...};
@@ -2593,8 +2608,8 @@ class in {
     auto loaded = access::make_unique<type>();
     ;
     if (auto result = serialize_one(*loaded); failure(result)) [[unlikely]] {
-      return result;
-    }
+        return result;
+      }
 
     pointer.reset(loaded.release());
     return {};
@@ -2605,8 +2620,8 @@ class in {
     constexpr auto size_in_bytes = (size + (CHAR_BIT - 1)) / CHAR_BIT;
 
     if (size_in_bytes > m_data.size() - m_position) [[unlikely]] {
-      return std::errc::result_out_of_range;
-    }
+        return std::errc::result_out_of_range;
+      }
 
     auto data = m_data.data() + m_position;
     for (std::size_t i = 0; i < size; ++i) {
@@ -2625,8 +2640,8 @@ class in {
     if constexpr (!std::is_void_v<SizeType>) {
       SizeType size{};
       if (auto result = serialize_one(size); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
 
       if constexpr (requires { typename type::serialize; }) {
         constexpr auto protocol = type::serialize::value;
@@ -2934,13 +2949,13 @@ template <typename Function>
 using function_return_type_t =
     typename function_traits<std::remove_cvref_t<Function>>::return_type;
 
-constexpr auto success(auto&& value_or_errc) requires
-    std::same_as<decltype(value_or_errc.error()), errc> {
+constexpr auto success(auto&& value_or_errc) requires std::same_as<
+    decltype(value_or_errc.error()), errc> {
   return value_or_errc.success();
 }
 
-constexpr auto failure(auto&& value_or_errc) requires
-    std::same_as<decltype(value_or_errc.error()), errc> {
+constexpr auto failure(auto&& value_or_errc) requires std::same_as<
+    decltype(value_or_errc.error()), errc> {
   return value_or_errc.failure();
 }
 
@@ -2963,7 +2978,7 @@ struct [[nodiscard]] value_or_errc {
       : m_error(std::forward<decltype(error)>(error)) {
   }
 
-  constexpr value_or_errc(value_or_errc&& other) noexcept {
+  constexpr value_or_errc(value_or_errc && other) noexcept {
     if (other.is_value()) {
       if constexpr (!std::is_void_v<Type>) {
         if constexpr (!std::is_reference_v<Type>) {
@@ -2996,7 +3011,7 @@ struct [[nodiscard]] value_or_errc {
     return m_failure;
   }
 
-  constexpr decltype(auto) value() & noexcept {
+  constexpr decltype(auto) value()& noexcept {
     if constexpr (std::is_same_v<Type, decltype(m_return_value)>) {
       return (m_return_value);
     } else {
@@ -3004,7 +3019,7 @@ struct [[nodiscard]] value_or_errc {
     }
   }
 
-  constexpr decltype(auto) value() && noexcept {
+  constexpr decltype(auto) value()&& noexcept {
     if constexpr (std::is_same_v<Type, decltype(m_return_value)>) {
       return std::forward<Type>(m_return_value);
     } else {
@@ -3025,51 +3040,51 @@ struct [[nodiscard]] value_or_errc {
   }
 
 #if __has_include("zpp_throwing.h")
-  constexpr zpp::throwing<Type> operator co_await() && {
+  constexpr zpp::throwing<Type> operator co_await()&& {
     if (failure()) [[unlikely]] {
-      return error().code;
-    }
+        return error().code;
+      }
     return std::move(*this).value();
   }
 
   constexpr zpp::throwing<Type> operator co_await() const& {
     if (failure()) [[unlikely]] {
-      return error().code;
-    }
+        return error().code;
+      }
     return value();
   }
 #endif
 
-  constexpr decltype(auto) or_throw() & {
+  constexpr decltype(auto) or_throw()& {
     if (failure()) [[unlikely]] {
 #ifdef __cpp_exceptions
-      throw std::system_error(std::make_error_code(error().code));
+        throw std::system_error(std::make_error_code(error().code));
 #else
-      std::abort();
+        std::abort();
 #endif
-    }
+      }
     return value();
   }
 
-  constexpr decltype(auto) or_throw() && {
+  constexpr decltype(auto) or_throw()&& {
     if (failure()) [[unlikely]] {
 #ifdef __cpp_exceptions
-      throw std::system_error(std::make_error_code(error().code));
+        throw std::system_error(std::make_error_code(error().code));
 #else
-      std::abort();
+        std::abort();
 #endif
-    }
+      }
     return std::move(*this).value();
   }
 
   constexpr decltype(auto) or_throw() const& {
     if (failure()) [[unlikely]] {
 #ifdef __cpp_exceptions
-      throw std::system_error(std::make_error_code(error().code));
+        throw std::system_error(std::make_error_code(error().code));
 #else
-      std::abort();
+        std::abort();
 #endif
-    }
+      }
     return value();
   }
 
@@ -3095,15 +3110,15 @@ ZPP_BITS_INLINE constexpr auto apply(auto&& function, auto&& archive) requires(
       parameters_type parameters;
       if constexpr (std::is_void_v<return_type>) {
         if (auto result = archive(parameters); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
         std::apply(std::forward<decltype(function)>(function),
                    std::move(parameters));
         return errc{};
       } else {
         if (auto result = archive(parameters); failure(result)) [[unlikely]] {
-          return value_or_errc<return_type>{result};
-        }
+            return value_or_errc<return_type>{result};
+          }
         return value_or_errc<return_type>{std::apply(
             std::forward<decltype(function)>(function), std::move(parameters))};
       }
@@ -3117,15 +3132,15 @@ ZPP_BITS_INLINE constexpr auto apply(auto&& function, auto&& archive) requires(
       parameters_type parameters;
       if constexpr (std::is_void_v<return_type>) {
         if (auto result = archive(parameters); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
         std::apply(std::forward<decltype(function)>(function),
                    std::move(parameters));
         return errc{};
       } else {
         if (auto result = archive(parameters); failure(result)) [[unlikely]] {
-          return value_or_errc<return_type>{result};
-        }
+            return value_or_errc<return_type>{result};
+          }
         return value_or_errc<return_type>{std::apply(
             std::forward<decltype(function)>(function), std::move(parameters))};
       }
@@ -3148,9 +3163,9 @@ ZPP_BITS_INLINE constexpr auto apply(
     parameters_type parameters;
     if constexpr (std::is_void_v<return_type>) {
       if (auto result = archive(parameters); failure(result)) [[unlikely]] {
-        return result;
-      }
-      // Ignore GCC issue.
+          return result;
+        }
+        // Ignore GCC issue.
 #if defined __GNUC__ && !defined __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
@@ -3168,8 +3183,8 @@ ZPP_BITS_INLINE constexpr auto apply(
       return errc{};
     } else {
       if (auto result = archive(parameters); failure(result)) [[unlikely]] {
-        return value_or_errc<return_type>{result};
-      }
+          return value_or_errc<return_type>{result};
+        }
       return value_or_errc<return_type>(std::apply(
           [&](auto&&... arguments) -> decltype(auto) {
       // Ignore GCC issue.
@@ -3269,9 +3284,9 @@ struct bind_opaque {
 
 template <typename... Bindings>
 struct rpc_impl {
-  using id = std::remove_cvref_t<
-      decltype(std::remove_cvref_t<decltype(get<0>(
-                   std::tuple<Bindings...>{}))>::id::value)>;
+  using id = std::remove_cvref_t<decltype(
+      std::remove_cvref_t<decltype(
+          get<0>(std::tuple<Bindings...>{}))>::id::value)>;
 
   template <typename In, typename Out>
   struct client {
@@ -3307,8 +3322,8 @@ struct rpc_impl {
       } else if constexpr (request_binding::opaque) {
         return out(Id::value, arguments...);
         ;
-      } else if constexpr (std::same_as<std::tuple<std::remove_cvref_t<
-                                            decltype(arguments)>...>,
+      } else if constexpr (std::same_as<std::tuple<std::remove_cvref_t<decltype(
+                                            arguments)>...>,
                                         parameters_type>
 
       ) {
@@ -3319,17 +3334,16 @@ struct rpc_impl {
               std::forward_as_tuple<decltype(arguments)...>(arguments...)}};
         });
 
-        return out(
-            Id::value,
-            static_cast<std::conditional_t<
-                std::is_fundamental_v<std::remove_cvref_t<decltype(get<Indices>(
-                    std::declval<parameters_type>()))>> ||
-                    std::is_enum_v<std::remove_cvref_t<decltype(get<Indices>(
-                        std::declval<parameters_type>()))>>,
-                std::remove_cvref_t<decltype(get<Indices>(
-                    std::declval<parameters_type>()))>,
-                const decltype(get<Indices>(
-                    std::declval<parameters_type>()))&>>(arguments)...);
+        return out(Id::value,
+                   static_cast<std::conditional_t<
+                       std::is_fundamental_v<std::remove_cvref_t<decltype(
+                           get<Indices>(std::declval<parameters_type>()))>> ||
+                           std::is_enum_v<std::remove_cvref_t<decltype(
+                               get<Indices>(std::declval<parameters_type>()))>>,
+                       std::remove_cvref_t<decltype(
+                           get<Indices>(std::declval<parameters_type>()))>,
+                       const decltype(get<Indices>(
+                           std::declval<parameters_type>()))&>>(arguments)...);
       }
     }
 
@@ -3356,8 +3370,8 @@ struct rpc_impl {
       } else if constexpr (request_binding::opaque) {
         return out(arguments...);
         ;
-      } else if constexpr (std::same_as<std::tuple<std::remove_cvref_t<
-                                            decltype(arguments)>...>,
+      } else if constexpr (std::same_as<std::tuple<std::remove_cvref_t<decltype(
+                                            arguments)>...>,
                                         parameters_type>
 
       ) {
@@ -3368,16 +3382,15 @@ struct rpc_impl {
               std::forward_as_tuple<decltype(arguments)...>(arguments...)}};
         });
 
-        return out(
-            static_cast<std::conditional_t<
-                std::is_fundamental_v<std::remove_cvref_t<decltype(get<Indices>(
-                    std::declval<parameters_type>()))>> ||
-                    std::is_enum_v<std::remove_cvref_t<decltype(get<Indices>(
-                        std::declval<parameters_type>()))>>,
-                std::remove_cvref_t<decltype(get<Indices>(
-                    std::declval<parameters_type>()))>,
-                const decltype(get<Indices>(
-                    std::declval<parameters_type>()))&>>(arguments)...);
+        return out(static_cast<std::conditional_t<
+                       std::is_fundamental_v<std::remove_cvref_t<decltype(
+                           get<Indices>(std::declval<parameters_type>()))>> ||
+                           std::is_enum_v<std::remove_cvref_t<decltype(
+                               get<Indices>(std::declval<parameters_type>()))>>,
+                       std::remove_cvref_t<decltype(
+                           get<Indices>(std::declval<parameters_type>()))>,
+                       const decltype(get<Indices>(
+                           std::declval<parameters_type>()))&>>(arguments)...);
       }
     }
 
@@ -3403,23 +3416,23 @@ struct rpc_impl {
       } else if constexpr (requires(return_type && value) {
                              value.await_ready();
                            }) {
-        using nested_return = std::remove_cvref_t<
-            decltype(std::declval<return_type>().await_resume())>;
+        using nested_return = std::remove_cvref_t<decltype(
+            std::declval<return_type>().await_resume())>;
         if constexpr (std::is_void_v<nested_return>) {
           return;
         } else {
           nested_return return_value;
           if (auto result = in(return_value); failure(result)) [[unlikely]] {
-            return value_or_errc<nested_return>{result};
-          }
+              return value_or_errc<nested_return>{result};
+            }
           return value_or_errc<nested_return>{std::move(return_value)};
         }
 #endif
       } else {
         return_type return_value;
         if (auto result = in(return_value); failure(result)) [[unlikely]] {
-          return value_or_errc<return_type>{result};
-        }
+            return value_or_errc<return_type>{result};
+          }
         return value_or_errc<return_type>{std::move(return_value)};
       }
     }
@@ -3458,26 +3471,27 @@ struct rpc_impl {
     ZPP_BITS_INLINE constexpr auto call_binding(auto& id) requires(
         !FirstBinding::opaque) {
       if (FirstBinding::id::value == id) {
-        if constexpr (std::is_void_v<decltype(FirstBinding::call(in,
-                                                                 context))>) {
+        if constexpr (std::is_void_v<decltype(
+                          FirstBinding::call(in, context))>) {
           FirstBinding::call(in, context);
           return errc{};
-        } else if constexpr (std::same_as<decltype(FirstBinding::call(in,
-                                                                      context)),
+        } else if constexpr (std::same_as<decltype(
+                                              FirstBinding::call(in, context)),
                                           errc>) {
           if (auto result = FirstBinding::call(in, context); failure(result))
-              [[unlikely]] {
-            return result;
-          }
+            [[unlikely]] {
+              return result;
+            }
           return errc{};
         } else if constexpr (std::is_void_v<
                                  typename FirstBinding::parameters_type>) {
           return out(FirstBinding::call(in, context));
         } else {
           if (auto result = FirstBinding::call(in, context); failure(result))
-              [[unlikely]] {
-            return result.error();
-          } else {
+            [[unlikely]] {
+              return result.error();
+            }
+          else {
             return out(result.value());
           }
         }
@@ -3491,32 +3505,35 @@ struct rpc_impl {
     }
 
     template <typename FirstBinding, typename... OtherBindings>
-    ZPP_BITS_INLINE constexpr auto call_binding(auto& id) requires
-        FirstBinding::opaque {
+    ZPP_BITS_INLINE constexpr auto call_binding(
+        auto& id) requires FirstBinding::opaque {
       if (FirstBinding::id::value == id) {
-        if constexpr (std::is_void_v<decltype(FirstBinding::call(in, out,
-                                                                 context))>) {
+        if constexpr (std::is_void_v<decltype(
+                          FirstBinding::call(in, out, context))>) {
           FirstBinding::call(in, out, context);
           return errc{};
         } else if constexpr (std::same_as<decltype(FirstBinding::call(in, out,
                                                                       context)),
                                           errc>) {
           if (auto result = FirstBinding::call(in, out, context);
-              failure(result)) [[unlikely]] {
-            return result;
-          }
+              failure(result))
+            [[unlikely]] {
+              return result;
+            }
           return errc{};
         } else if constexpr (requires {
                                requires std::same_as<
                                    typename decltype(FirstBinding::call(
                                        in, out, context))::value_type,
-                                   value_or_errc<decltype(FirstBinding::call(
-                                       in, out, context))>>;
+                                   value_or_errc<decltype(
+                                       FirstBinding::call(in, out, context))>>;
                              }) {
           if (auto result = FirstBinding::call(in, out, context);
-              failure(result)) [[unlikely]] {
-            return result.error();
-          } else {
+              failure(result))
+            [[unlikely]] {
+              return result.error();
+            }
+          else {
             return out(result.value());
           }
         } else {
@@ -3536,26 +3553,26 @@ struct rpc_impl {
     zpp::throwing<void> call_binding_throwing(auto& id) requires(
         !FirstBinding::opaque) {
       if (FirstBinding::id::value == id) {
-        if constexpr (std::is_void_v<decltype(FirstBinding::call(in,
-                                                                 context))>) {
+        if constexpr (std::is_void_v<decltype(
+                          FirstBinding::call(in, context))>) {
           FirstBinding::call(in, context);
           co_return;
-        } else if constexpr (std::same_as<decltype(FirstBinding::call(in,
-                                                                      context)),
+        } else if constexpr (std::same_as<decltype(
+                                              FirstBinding::call(in, context)),
                                           errc>) {
           if (auto result = FirstBinding::call(in, context); failure(result))
-              [[unlikely]] {
-            co_yield result.code;
-          }
+            [[unlikely]] {
+              co_yield result.code;
+            }
           co_return;
         } else if constexpr (std::is_void_v<
                                  typename FirstBinding::parameters_type>) {
           if constexpr (requires {
                           FirstBinding::call(in, context).await_ready();
                         }) {
-            if constexpr (std::is_void_v<decltype(FirstBinding::call(in,
-                                                                     context)
-                                                      .await_resume())>) {
+            if constexpr (std::is_void_v<decltype(
+                              FirstBinding::call(in, context)
+                                  .await_resume())>) {
               co_await FirstBinding::call(in, context);
             } else {
               co_await out(co_await FirstBinding::call(in, context));
@@ -3565,11 +3582,12 @@ struct rpc_impl {
           }
         } else {
           if (auto result = FirstBinding::call(in, context); failure(result))
-              [[unlikely]] {
-            co_yield result.error().code;
-          } else if constexpr (requires { result.value().await_ready(); }) {
-            if constexpr (!std::is_void_v<
-                              decltype(result.value().await_resume())>) {
+            [[unlikely]] {
+              co_yield result.error().code;
+            }
+          else if constexpr (requires { result.value().await_ready(); }) {
+            if constexpr (!std::is_void_v<decltype(
+                              result.value().await_resume())>) {
               co_await out(co_await result.value());
             }
             co_return;
@@ -3587,34 +3605,37 @@ struct rpc_impl {
     }
 
     template <typename FirstBinding, typename... OtherBindings>
-    zpp::throwing<void> call_binding_throwing(auto& id) requires
-        FirstBinding::opaque {
+    zpp::throwing<void> call_binding_throwing(
+        auto& id) requires FirstBinding::opaque {
       if (FirstBinding::id::value == id) {
-        if constexpr (std::is_void_v<decltype(FirstBinding::call(in, out,
-                                                                 context))>) {
+        if constexpr (std::is_void_v<decltype(
+                          FirstBinding::call(in, out, context))>) {
           FirstBinding::call(in, out, context);
           co_return;
         } else if constexpr (std::same_as<decltype(FirstBinding::call(in, out,
                                                                       context)),
                                           errc>) {
           if (auto result = FirstBinding::call(in, out, context);
-              failure(result)) [[unlikely]] {
-            co_yield result.code;
-          }
+              failure(result))
+            [[unlikely]] {
+              co_yield result.code;
+            }
           co_return;
         } else if constexpr (requires {
                                requires std::same_as<
                                    typename decltype(FirstBinding::call(
                                        in, out, context))::value_type,
-                                   value_or_errc<decltype(FirstBinding::call(
-                                       in, out, context))>>;
+                                   value_or_errc<decltype(
+                                       FirstBinding::call(in, out, context))>>;
                              }) {
           if (auto result = FirstBinding::call(in, out, context);
-              failure(result)) [[unlikely]] {
-            co_yield result.error().code;
-          } else if constexpr (requires { result.value().await_ready(); }) {
-            if constexpr (!std::is_void_v<
-                              decltype(result.value().await_resume())>) {
+              failure(result))
+            [[unlikely]] {
+              co_yield result.error().code;
+            }
+          else if constexpr (requires { result.value().await_ready(); }) {
+            if constexpr (!std::is_void_v<decltype(
+                              result.value().await_resume())>) {
               co_await out(co_await result.value());
             }
             co_return;
@@ -3625,9 +3646,9 @@ struct rpc_impl {
           if constexpr (requires {
                           FirstBinding::call(in, out, context).await_ready();
                         }) {
-            if constexpr (std::is_void_v<decltype(FirstBinding::call(in, out,
-                                                                     context)
-                                                      .await_resume())>) {
+            if constexpr (std::is_void_v<decltype(
+                              FirstBinding::call(in, out, context)
+                                  .await_resume())>) {
               co_await FirstBinding::call(in, out, context);
             } else {
               co_await out(co_await FirstBinding::call(in, out, context));
@@ -3664,8 +3685,8 @@ struct rpc_impl {
     constexpr auto serve() {
       rpc_impl::id id;
       if (auto result = in(id); failure(result)) [[unlikely]] {
-        return decltype(serve(rpc_impl::id{})){result.code};
-      }
+          return decltype(serve(rpc_impl::id{})){result.code};
+        }
 
       return serve(id);
     }
@@ -3931,8 +3952,9 @@ struct pb {
       return true;
     } else if constexpr (concepts::by_protocol<type>) {
       static_assert(
-          std::same_as<pb_default, typename decltype(access::get_protocol<
-                                                     type>())::pb_default>);
+          std::same_as<pb_default,
+                       typename decltype(
+                           access::get_protocol<type>())::pb_default>);
       static_assert(unique_field_numbers<type>());
       return true;
     } else {
@@ -4061,9 +4083,10 @@ struct pb {
       auto&... items) requires(std::remove_cvref_t<decltype(archive)>::kind() ==
                                kind::out) {
     if (auto result = serialize_one<FirstIndex>(archive, first_item);
-        failure(result)) [[unlikely]] {
-      return result;
-    }
+        failure(result))
+      [[unlikely]] {
+        return result;
+      }
 
     return serialize_many(std::index_sequence<Indices...>{}, archive, items...);
   }
@@ -4093,15 +4116,16 @@ struct pb {
       constexpr auto tag = make_tag<tag_type, Index>();
       if (auto result =
               archive(tag, varint{std::underlying_type_t<type>(item)});
-          failure(result)) [[unlikely]] {
-        return result;
-      }
+          failure(result))
+        [[unlikely]] {
+          return result;
+        }
       return {};
     } else if constexpr (!concepts::container<type>) {
       constexpr auto tag = make_tag<tag_type, Index>();
       if (auto result = archive(tag, item); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
       return {};
     } else if constexpr (concepts::associative_container<type> &&
                          requires { typename type::mapped_type; }) {
@@ -4127,9 +4151,10 @@ struct pb {
 
       for (auto& [key, value] : item) {
         if (auto result = archive(tag, value_type{.key = key, .value = value});
-            failure(result)) [[unlikely]] {
-          return result;
-        }
+            failure(result))
+          [[unlikely]] {
+            return result;
+          }
       }
 
       return {};
@@ -4142,14 +4167,15 @@ struct pb {
       constexpr auto tag = make_tag<tag_type, Index>();
       auto size = item.size();
       if (!size) [[unlikely]] {
-        return {};
-      }
+          return {};
+        }
       if (auto result =
               archive(tag, varint{size * sizeof(typename type::value_type)},
                       unsized(item));
-          failure(result)) [[unlikely]] {
-        return result;
-      }
+          failure(result))
+        [[unlikely]] {
+          return result;
+        }
       return {};
     } else if constexpr (requires {
                            requires concepts::varint<typename type::value_type>;
@@ -4161,12 +4187,13 @@ struct pb {
         size += varint_size<type::value_type::encoding>(element.value);
       }
       if (!size) [[unlikely]] {
-        return {};
-      }
+          return {};
+        }
       if (auto result = archive(tag, varint{size}, unsized(item));
-          failure(result)) [[unlikely]] {
-        return result;
-      }
+          failure(result))
+        [[unlikely]] {
+          return result;
+        }
       return {};
     } else if constexpr (requires {
                            requires std::is_enum_v<typename type::value_type>;
@@ -4179,26 +4206,27 @@ struct pb {
         size += varint_size(std::underlying_type_t<type>(element));
       }
       if (!size) [[unlikely]] {
-        return {};
-      }
+          return {};
+        }
       if (auto result = archive(tag, varint{size}); failure(result))
-          [[unlikely]] {
-        return result;
-      }
+        [[unlikely]] {
+          return result;
+        }
       for (auto& element : item) {
         if (auto result =
                 archive(varint{std::underlying_type_t<type>(element)});
-            failure(result)) [[unlikely]] {
-          return result;
-        }
+            failure(result))
+          [[unlikely]] {
+            return result;
+          }
       }
       return {};
     } else {
       constexpr auto tag = make_tag<typename type::value_type, Index>();
       for (auto& element : item) {
         if (auto result = archive(tag, element); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
       }
       return {};
     }
@@ -4241,14 +4269,15 @@ struct pb {
     while (archive.position() < size) {
       vuint32_t tag;
       if (auto result = archive(tag); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
 
       if (auto result =
               deserialize_field(archive, item, tag_number(tag), tag_type(tag));
-          failure(result)) [[unlikely]] {
-        return result;
-      }
+          failure(result))
+        [[unlikely]] {
+          return result;
+        }
     }
 
     return {};
@@ -4260,8 +4289,8 @@ struct pb {
     using type = std::remove_reference_t<decltype(item)>;
     if constexpr (Index >= number_of_members<type>()) {
       if (!field_num) [[unlikely]] {
-        return errc{std::errc::protocol_error};
-      }
+          return errc{std::errc::protocol_error};
+        }
       return errc{};
     } else if (field_number_from_struct<type, Index>() != field_num) {
       return deserialize_field<Index + 1>(archive, item, field_num, field_type);
@@ -4298,8 +4327,8 @@ struct pb {
     if constexpr (std::is_enum_v<type>) {
       varint<type> value;
       if (auto result = archive(value); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
       item = value;
       return errc{};
     } else if constexpr (is_pb_field<type>()) {
@@ -4333,8 +4362,8 @@ struct pb {
       auto object = access::placement_new<value_type>(std::addressof(storage));
       destructor_guard guard{*object};
       if (auto result = archive(*object); failure(result)) [[unlikely]] {
-        return result;
-      }
+          return result;
+        }
 
       item.emplace(std::move(object->key), std::move(object->value));
       return errc{};
@@ -4351,8 +4380,8 @@ struct pb {
         auto fetch = [&]() ZPP_BITS_CONSTEXPR_INLINE_LAMBDA {
           value_type value;
           if (auto result = archive(value); failure(result)) [[unlikely]] {
-            return result;
-          }
+              return result;
+            }
 
           if constexpr (requires { item.push_back(orig_value_type(value)); }) {
             item.push_back(orig_value_type(value));
@@ -4363,12 +4392,12 @@ struct pb {
           return errc{};
         };
         if (field_type != wire_type::length_delimited) [[unlikely]] {
-          return fetch();
-        }
+            return fetch();
+          }
         vsize_t length;
         if (auto result = archive(length); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
 
         if constexpr (requires { item.resize(1); } &&
                       (std::is_fundamental_v<value_type> ||
@@ -4376,8 +4405,8 @@ struct pb {
           if constexpr (archive_type::allocation_limit !=
                         std::numeric_limits<std::size_t>::max()) {
             if (length > archive_type::allocation_limit) [[unlikely]] {
-              return errc{std::errc::message_size};
-            }
+                return errc{std::errc::message_size};
+              }
           }
           item.resize(length / sizeof(value_type));
           return archive(unsized(item));
@@ -4389,8 +4418,8 @@ struct pb {
           auto end_position = length + archive.position();
           while (archive.position() < end_position) {
             if (auto result = fetch(); failure(result)) [[unlikely]] {
-              return result;
-            }
+                return result;
+              }
           }
 
           return errc{};
@@ -4402,8 +4431,8 @@ struct pb {
             access::placement_new<value_type>(std::addressof(storage));
         destructor_guard guard{*object};
         if (auto result = archive(*object); failure(result)) [[unlikely]] {
-          return result;
-        }
+            return result;
+          }
 
         if constexpr (requires { item.push_back(std::move(*object)); }) {
           item.push_back(std::move(*object));

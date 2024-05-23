@@ -7,8 +7,8 @@
 // Commands
 #include "client/appendcommand.hpp"
 #include "client/deletecommand.hpp"
-#include "client/getcommand.hpp"
 #include "client/gdpr_deletecommand.hpp"
+#include "client/getcommand.hpp"
 #include "client/joincommand.hpp"
 #include "client/leavecommand.hpp"
 #include "client/movecommand.hpp"
