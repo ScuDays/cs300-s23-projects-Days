@@ -40,14 +40,18 @@ class synchronized_queue {
   /**
    * Pop and set the elt pointer element from the front of the queue. Returns
    * true if the queue has been stopped, or false otherwise.
-   *
+   * 从队列前面弹出并设置elt指针元素。如果队列已停止，则返回true；否则返回false。
+   * 
    * Unless the queue has been stopped, calling pop() will always set elt and
    * return false. If the queue is empty, pop will wait until an element is
    * pushed onto it.
-   *
+   * 除非队列已停止，否则调用pop()将始终设置elt并返回false。如果队列为空，pop将等待直到有元素被推送进来。
+   * (会堵塞直到被唤醒?)
+   * 
    * However, if the queue has been stopped, even if the queue is not empty, the
    * function will return true with no element set.
-   *
+   * 然而，如果队列已经停止，即使队列不为空，该函数也会返回 true 而没有设置任何元素。
+   * 
    * @param elt pointer to be set to popped element
    * @return true if the queue has been stopped, or false otherwise
    */
@@ -55,10 +59,11 @@ class synchronized_queue {
 
   /**
    * Push an element onto the back of the queue.
-   *
+   * 将一个元素推送到队列的末尾。
+   * 
    * If the queue is empty, this call will signal any one thread that is waiting
    * to pop from the queue.
-   *
+   * 如果队列为空，此调用将通知任何一个正在等待从队列中弹出元素的线程。
    * @param elt element to be pushed on the queue
    */
   void push(T elt);
@@ -66,20 +71,25 @@ class synchronized_queue {
   /**
    * Flush will return a vector of all elements currently in the queue, even if
    * the queue has been stopped.
-   *
+   * Flush会返回队列中当前所有元素的向量，即使队列已经停止。
+   * 
    * After this function is called the queue will be empty. This call may
    * return an empty vector without blocking.
-   *
+   * 调用此函数后，队列将为空。该调用可能会立即返回一个没有阻塞的vector。
+   * 
    * @return vector of all elements in the queue
    */
   std::vector<T> flush();
 
   /**
    * Stop the queue.
-   *
+   * 停止队列
+   * 
    * This function serves as a way to release any threads waiting for the
    * queue to become non-empty. Doing this also allows the condition variable
    * to be cleaned up when the program exists.
+   * 该函数用于释放任何等待队列变为非空的线程。这样做还可以在程序退出时清理条件变量。
+   * 
    */
   void stop();
 

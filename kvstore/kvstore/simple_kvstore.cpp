@@ -5,7 +5,7 @@ bool SimpleKvStore::Get(const GetRequest* req, GetResponse* res) {
   this->mutex_1.lock();
   if (this->KeyValueMap.count(req->key) == 0) {
     // printf("不存在该键");
-     this->mutex_1.unlock();
+    this->mutex_1.unlock();
     return false;
   }
   res->value = this->KeyValueMap[req->key];
@@ -23,7 +23,9 @@ bool SimpleKvStore::Put(const PutRequest* req, PutResponse*) {
   } else {
     this->KeyValueMap[req->key] = req->value;
   }
+
   this->mutex_1.unlock();
+
   return true;
 }
 
@@ -40,7 +42,8 @@ bool SimpleKvStore::Append(const AppendRequest* req, AppendResponse*) {
     this->KeyValueMap[req->key] = finalValue;
   }
   this->mutex_1.unlock();
-    return true;
+
+  return true;
 }
 
 bool SimpleKvStore::Delete(const DeleteRequest* req, DeleteResponse* res) {
