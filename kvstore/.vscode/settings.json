@@ -64,7 +64,8 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "set": "cpp",
-        "unordered_set": "cpp"
+        "unordered_set": "cpp",
+        "future": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
