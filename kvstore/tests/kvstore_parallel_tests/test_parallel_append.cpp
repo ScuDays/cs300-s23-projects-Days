@@ -11,7 +11,6 @@ static constexpr std::size_t kNumKeyValPairs = 10'000;
 static constexpr std::size_t kNumToAppend = 10;
 
 int main(int argc, char* argv[]) {
-
   // 创建键值存储实例
   auto store = make_kvstore(argc, argv);
 
@@ -25,7 +24,6 @@ int main(int argc, char* argv[]) {
   auto threads = std::vector<std::future<bool>>{};
 
   for (std::size_t i = 0; i < n_threads; ++i) {
-
     threads.push_back(std::async(std::launch::async, [&, tid = i]() {
       std::string to_append = std::string(1, c + tid);
       // Append (A + i) kNumToAppend times
@@ -38,7 +36,6 @@ int main(int argc, char* argv[]) {
       }
       return true;
     }));
-
   }
 
   auto passed = true;

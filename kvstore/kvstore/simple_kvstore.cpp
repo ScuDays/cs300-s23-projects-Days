@@ -9,13 +9,13 @@ bool SimpleKvStore::Get(const GetRequest* req, GetResponse* res) {
     return false;
   }
   res->value = this->KeyValueMap[req->key];
-    this->mutex_1.unlock();
+  this->mutex_1.unlock();
   return true;
 }
 
 bool SimpleKvStore::Put(const PutRequest* req, PutResponse*) {
   // TODO (Part A, Steps 1 and 2): IMPLEMENT
-    this->mutex_1.lock();
+  this->mutex_1.lock();
   if (this->KeyValueMap.count(req->key) == 0) {
     // printf("不存在该键");
     KeyValueMap.insert(
@@ -23,9 +23,7 @@ bool SimpleKvStore::Put(const PutRequest* req, PutResponse*) {
   } else {
     this->KeyValueMap[req->key] = req->value;
   }
-
   this->mutex_1.unlock();
-
   return true;
 }
 
@@ -34,7 +32,8 @@ bool SimpleKvStore::Append(const AppendRequest* req, AppendResponse*) {
   this->mutex_1.lock();
   //不存在该键值对
   if (this->KeyValueMap.count(req->key) == 0) {
-    this->KeyValueMap.insert(std::pair<std::string, std::string>(req->key, req->value));
+    this->KeyValueMap.insert(
+        std::pair<std::string, std::string>(req->key, req->value));
   }
   //存在该键值对,append附加到值后面
   else {
@@ -51,12 +50,12 @@ bool SimpleKvStore::Delete(const DeleteRequest* req, DeleteResponse* res) {
   this->mutex_1.lock();
   if (this->KeyValueMap.count(req->key) == 0) {
     // printf("不存在该键");
-     this->mutex_1.unlock();
+    this->mutex_1.unlock();
     return false;
   } else {
     res->value = this->KeyValueMap[req->key];
     this->KeyValueMap.erase(req->key);
-     this->mutex_1.unlock();
+    this->mutex_1.unlock();
     return true;
   }
 }
@@ -73,9 +72,9 @@ bool SimpleKvStore::MultiGet(const MultiGetRequest* req,
       ifGet = false;
     }
   }
- 
+
   if (ifGet == false) {
-     this->mutex_1.unlock();
+    this->mutex_1.unlock();
     return false;
   } else {
     this->mutex_1.unlock();
@@ -93,7 +92,7 @@ bool SimpleKvStore::MultiPut(const MultiPutRequest* req, MultiPutResponse*) {
   // TODO (Part A, Steps 1 and 2): IMPLEMENT
   std::vector<std::string> ReqKeyVector = req->keys;
   std::vector<std::string> ReqValuesVector = req->values;
-  
+
   for (int i = 0; i < ReqKeyVector.size(); i++) {
     if (this->KeyValueMap.count(ReqKeyVector[i]) != 0) {
       this->KeyValueMap[ReqKeyVector[i]] = ReqValuesVector[i];
@@ -116,6 +115,6 @@ std::vector<std::string> SimpleKvStore::AllKeys() {
     // KeyVector.push_back((*it).first);
     KeyVector.push_back(it->first);
   }
-   this->mutex_1.unlock();
+  this->mutex_1.unlock();
   return KeyVector;
 }
